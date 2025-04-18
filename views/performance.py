@@ -1,14 +1,21 @@
+# views/performance.py
 import streamlit as st
-import plotly.graph_objects as go
 import pandas as pd
-from datetime import datetime
+import plotly.express as px
+import numpy as np
+from datetime import datetime, timedelta
 
 def show_performance_view(df):
-    st.markdown("### 📈 Andamento storico (placeholder)")
-    total_value = df['value'].sum()
-    simulated_dates = pd.date_range(end=datetime.today(), periods=60)
-    simulated_values = [total_value * (1 + 0.01 * ((i % 10) - 5)) for i in range(60)]
-    fig_perf = go.Figure()
-    fig_perf.add_trace(go.Scatter(x=simulated_dates, y=simulated_values, mode='lines', name='Valore Portafoglio'))
-    fig_perf.update_layout(title='Simulazione Andamento Portafoglio (ultimi 60 giorni)', xaxis_title='Data', yaxis_title='Valore €')
-    st.plotly_chart(fig_perf, use_container_width=True)
+    st.subheader("📈 Andamento storico (placeholder)")
+
+    # Correggi colonna: 'value' -> 'current_value'
+    total_value = df['current_value'].sum()
+
+    # Crea dati storici simulati
+    mock_data = pd.DataFrame({
+        "Data": pd.date_range(end=datetime.today(), periods=10),
+        "Valore": [total_value * (0.95 + 0.01 * i) for i in range(10)]
+    })
+
+    fig = px.line(mock_data, x="Data", y="Valore", title="Andamento del Portafoglio nel tempo")
+    st.plotly_chart(fig, use_container_width=True)
