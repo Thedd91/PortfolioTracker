@@ -24,6 +24,14 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 """
 
+INITIAL_ASSETS = [
+    ("IE00B4L5Y983", "etf"),   # iShares MSCI World
+    ("IE00B5BMR087", "etf"),  # iShares S&P 500
+    ("bitcoin", "crypto"),
+    ("ethereum", "crypto"),
+    ("solana", "crypto")
+]
+
 def init_db():
     if not os.path.exists("db"):
         os.makedirs("db")
@@ -31,6 +39,12 @@ def init_db():
     c = conn.cursor()
     c.execute(ASSETS_SCHEMA)
     c.execute(TRANSACTIONS_SCHEMA)
+
+    # Inserimento iniziale se tabella vuota
+    c.execute("SELECT COUNT(*) FROM assets")
+    if c.fetchone()[0] == 0:
+        c.executemany("INSERT INTO assets (ticker, asset_type) VALUES (?, ?)", INITIAL_ASSETS)
+
     conn.commit()
     conn.close()
 
