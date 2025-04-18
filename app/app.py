@@ -1,4 +1,4 @@
-# app/app.py
+# app.py
 
 import streamlit as st
 from views.performance import show_performance_view
