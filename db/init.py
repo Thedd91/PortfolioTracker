@@ -1,67 +1,51 @@
+# db/init.py
 import sqlite3
-import pandas as pd
-from datetime import datetime
-import yfinance as yf
+import os
+
+DB_PATH = "db/portfolio.db"
+
+ASSETS_SCHEMA = """
+CREATE TABLE IF NOT EXISTS assets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticker TEXT NOT NULL,
+    asset_type TEXT CHECK(asset_type IN ('stock', 'etf', 'crypto')),
+    current_price REAL DEFAULT 0
+);
+"""
+
+TRANSACTIONS_SCHEMA = """
+CREATE TABLE IF NOT EXISTS transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    asset_id INTEGER NOT NULL,
+    quantity REAL NOT NULL,
+    price REAL NOT NULL,
+    date TEXT NOT NULL,
+    FOREIGN KEY(asset_id) REFERENCES assets(id)
+);
+"""
 
 def init_db():
-    conn = sqlite3.connect("portfolio.db")
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS portfolio_assets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            ticker TEXT,
-            type TEXT,
-            region TEXT,
-            sector TEXT,
-            currency TEXT,
-            quantity REAL,
-            price REAL,
-            value REAL,
-            last_updated TEXT
-        )
-    ''')
-    cursor.execute("SELECT COUNT(*) FROM portfolio_assets")
-    if cursor.fetchone()[0] == 0:
-        etf_data = {
-            'IWDA.AS': {
-                'name': 'iShares MSCI World',
-                'region': 'Global',
-                'sector': 'Mixed',
-                'currency': 'EUR',
-                'type': 'ETF',
-                'quantity': 10
-            },
-            'SAD1.DE': {
-                'name': 'iShares MSCI EM',
-                'region': 'Emerging Markets',
-                'sector': 'Mixed',
-                'currency': 'EUR',
-                'type': 'ETF',
-                'quantity': 8
-            }
-        }
-        for ticker, data in etf_data.items():
-            try:
-                yf_data = yf.Ticker(ticker)
-                price = yf_data.info.get('regularMarketPrice', 0)
-                value = price * data['quantity']
-                last_updated = datetime.now().isoformat()
-                cursor.execute('''
-                    INSERT INTO portfolio_assets 
-                    (name, ticker, type, region, sector, currency, quantity, price, value, last_updated)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    data['name'], ticker, data['type'], data['region'], data['sector'],
-                    data['currency'], data['quantity'], price, value, last_updated
-                ))
-            except Exception as e:
-                print(f"Errore durante il fetch di {ticker}: {e}")
+    if not os.path.exists("db"):
+        os.makedirs("db")
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(ASSETS_SCHEMA)
+    c.execute(TRANSACTIONS_SCHEMA)
     conn.commit()
     conn.close()
 
 def load_portfolio_data():
-    conn = sqlite3.connect("portfolio.db")
-    df = pd.read_sql_query("SELECT * FROM portfolio_assets", conn)
+    conn = sqlite3.connect(DB_PATH)
+    df = conn.execute("""
+        SELECT a.id, a.ticker, a.asset_type, a.current_price,
+               IFNULL(SUM(t.quantity), 0) as total_quantity,
+               IFNULL(SUM(t.quantity * t.price), 0) as total_cost,
+               IFNULL(SUM(t.quantity), 0) * a.current_price as current_value
+        FROM assets a
+        LEFT JOIN transactions t ON a.id = t.asset_id
+        GROUP BY a.id
+    """).fetchall()
+    cols = ["id", "ticker", "asset_type", "current_price", "quantity", "total_cost", "current_value"]
     conn.close()
-    return df
+    import pandas as pd
+    return pd.DataFrame(df, columns=cols)
