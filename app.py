@@ -1,6 +1,7 @@
 # app.py
 
 import streamlit as st
+from views.positions import show_positions_view
 from views.performance import show_performance_view
 from views.portfolio_table import show_portfolio_table
 from views.allocation import show_allocation_views
@@ -23,3 +24,4 @@ st.metric(label="Valore totale attuale", value=f"{total_value:,.2f} €")
 show_performance_view(df)
 show_portfolio_table(df)
 show_allocation_views(df)
+show_positions_view()
