@@ -1,15 +1,30 @@
+# views/allocation.py
 import streamlit as st
 import plotly.express as px
+import numpy as np
 
 def show_allocation_views(df):
-    col1, col2 = st.columns(2)
+    st.subheader("📍 Asset Allocation")
 
-    with col1:
-        st.markdown("### 🌍 Allocation per Regione")
-        fig_region = px.pie(df, values='value', names='region', title='Distribuzione per Regione')
-        st.plotly_chart(fig_region, use_container_width=True)
+    # Inserisce una colonna mock 'region' se non presente
+    if 'region' not in df.columns:
+        regions = ['Europe', 'North America', 'Asia', 'Emerging Markets']
+        df['region'] = np.random.choice(regions, size=len(df))
 
-    with col2:
-        st.markdown("### 🏭 Allocation per Settore")
-        fig_sector = px.pie(df, values='value', names='sector', title='Distribuzione per Settore')
-        st.plotly_chart(fig_sector, use_container_width=True)
+    # Pie chart per regione
+    fig_region = px.pie(
+        df,
+        values='current_value',
+        names='region',
+        title='Distribuzione per Regione'
+    )
+    st.plotly_chart(fig_region, use_container_width=True)
+
+    # Pie chart per asset type (ETF, crypto, ecc.)
+    fig_type = px.pie(
+        df,
+        values='current_value',
+        names='asset_type',
+        title='Distribuzione per Tipologia di Asset'
+    )
+    st.plotly_chart(fig_type, use_container_width=True)
