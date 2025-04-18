@@ -1,26 +1,32 @@
 # app.py
-
 import streamlit as st
-from views.positions import show_positions_view
-from views.performance import show_performance_view
-from views.portfolio_table import show_portfolio_table
-from views.allocation import show_allocation_views
 from db.init import init_db, load_portfolio_data
+from engine.update_db import update_prices_in_db
 
-# === Configurazione layout Streamlit ===
-st.set_page_config(page_title="Investment Tracker", layout="wide")
-st.title("📊 Investment Tracker Dashboard")
-
-# === Inizializza il database se necessario ===
+# Inizializza il DB (solo la prima volta o se mancante)
 init_db()
+
+st.set_page_config(page_title="Portfolio Tracker", layout="wide")
+st.title("📈 Portfolio Tracker")
+
+# Bottone per aggiornare i prezzi live
+if st.button("🔄 Aggiorna prezzi live"):
+    update_prices_in_db()
+    st.success("Prezzi aggiornati con successo!")
+
+# Carica i dati dal database
 df = load_portfolio_data()
 
-# === Riepilogo portafoglio ===
-st.subheader("💰 Valore totale portafoglio")
-total_value = df['value'].sum()
-st.metric(label="Valore totale attuale", value=f"{total_value:,.2f} €")
+# Mostra valore totale del portafoglio
+st.subheader("Valore totale del portafoglio")
+total_value = df['current_value'].sum()
+st.metric("Totale attuale (EUR)", f"{total_value:,.2f} €")
 
-# === Visualizzazioni modulari ===
-show_performance_view(df)
-show_positions_view()
-show_allocation_views(df)
+# Mostra la tabella delle posizioni
+st.subheader("📊 Dettaglio posizioni")
+st.dataframe(df.style.format({
+    "current_price": "{:.2f} €",
+    "total_cost": "{:.2f} €",
+    "current_value": "{:.2f} €"
+}), use_container_width=True)
+
