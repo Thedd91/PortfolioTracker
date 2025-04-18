@@ -22,6 +22,5 @@ st.metric(label="Valore totale attuale", value=f"{total_value:,.2f} €")
 
 # === Visualizzazioni modulari ===
 show_performance_view(df)
-show_portfolio_table(df)
 show_allocation_views(df)
 show_positions_view()
