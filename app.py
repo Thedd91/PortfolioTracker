@@ -2,6 +2,9 @@
 import streamlit as st
 from db.init import init_db, load_portfolio_data
 from engine.update_db import update_prices_in_db
+from views.positions import show_positions_view
+from views.allocation import show_allocation_views
+from views.performance import show_performance_view
 
 # Inizializza il DB (solo la prima volta o se mancante)
 init_db()
@@ -30,3 +33,8 @@ st.dataframe(df.style.format({
     "current_value": "{:.2f} €"
 }), use_container_width=True)
 
+# Visualizzazioni aggiuntive
+st.markdown("---")
+show_positions_view()
+show_allocation_views()
+show_performance_view()
